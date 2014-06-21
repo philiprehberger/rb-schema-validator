@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "spec_helper"
+
 RSpec.describe Philiprehberger::SchemaValidator do
   describe ".define" do
     it "returns a Schema instance" do
