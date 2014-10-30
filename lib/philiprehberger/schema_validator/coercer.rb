@@ -33,15 +33,16 @@ module Philiprehberger
 
         str = value.to_s.downcase
         return true if BOOLEAN_TRUE.include?(str)
-        return false if BOOLEAN_FALSE.include?(str)
+
+        false if BOOLEAN_FALSE.include?(str)
       end
 
       def self.coerce_array(value)
-        return value if value.is_a?(Array)
+        value if value.is_a?(Array)
       end
 
       def self.coerce_hash(value)
-        return value if value.is_a?(Hash)
+        value if value.is_a?(Hash)
       end
 
       private_class_method :coerce_string, :coerce_integer, :coerce_float,
