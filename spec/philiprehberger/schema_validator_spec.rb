@@ -127,6 +127,110 @@ RSpec.describe Philiprehberger::SchemaValidator do
     end
   end
 
+  describe "fields accessor" do
+    subject(:schema) do
+      described_class.define do
+        string :name
+        integer :age
+        boolean :active
+      end
+    end
+
+    it "returns field names" do
+      expect(schema.fields).to eq(%i[name age active])
+    end
+  end
+
+  describe "format validation" do
+    subject(:schema) do
+      described_class.define do
+        string :email, format: /\A[^@\s]+@[^@\s]+\z/
+      end
+    end
+
+    it "passes when value matches format" do
+      result = schema.validate({ email: "alice@example.com" })
+      expect(result).to be_valid
+    end
+
+    it "fails when value does not match format" do
+      result = schema.validate({ email: "not-an-email" })
+      expect(result).not_to be_valid
+      expect(result.errors).to include("email does not match expected format")
+    end
+  end
+
+  describe "in validation" do
+    subject(:schema) do
+      described_class.define do
+        string :role, in: %w[admin user guest]
+      end
+    end
+
+    it "passes when value is in the allowlist" do
+      result = schema.validate({ role: "admin" })
+      expect(result).to be_valid
+    end
+
+    it "fails when value is not in the allowlist" do
+      result = schema.validate({ role: "superuser" })
+      expect(result).not_to be_valid
+      expect(result.errors).to include("role must be one of: admin, user, guest")
+    end
+  end
+
+  describe "min/max validation" do
+    subject(:schema) do
+      described_class.define do
+        integer :age, min: 0, max: 150
+        float :score, min: 0.0, max: 100.0
+      end
+    end
+
+    it "passes when values are within range" do
+      result = schema.validate({ age: 25, score: 85.5 })
+      expect(result).to be_valid
+    end
+
+    it "fails when integer is below min" do
+      result = schema.validate({ age: -1, score: 50.0 })
+      expect(result).not_to be_valid
+      expect(result.errors).to include("age must be >= 0")
+    end
+
+    it "fails when integer is above max" do
+      result = schema.validate({ age: 200, score: 50.0 })
+      expect(result).not_to be_valid
+      expect(result.errors).to include("age must be <= 150")
+    end
+
+    it "fails when float is below min" do
+      result = schema.validate({ age: 25, score: -1.0 })
+      expect(result).not_to be_valid
+      expect(result.errors).to include("score must be >= 0.0")
+    end
+
+    it "fails when float is above max" do
+      result = schema.validate({ age: 25, score: 101.0 })
+      expect(result).not_to be_valid
+      expect(result.errors).to include("score must be <= 100.0")
+    end
+  end
+
+  describe "coerce_boolean fix" do
+    subject(:schema) do
+      described_class.define do
+        boolean :flag
+      end
+    end
+
+    it "returns nil for unrecognized boolean values" do
+      result = schema.validate({ flag: "maybe" })
+      expect(result).not_to be_valid
+      expect(result.errors).to include("flag must be boolean")
+    end
+  end
+
   describe "array and hash types" do
     subject(:schema) do
       described_class.define do

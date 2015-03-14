@@ -34,7 +34,9 @@ module Philiprehberger
         str = value.to_s.downcase
         return true if BOOLEAN_TRUE.include?(str)
 
-        false if BOOLEAN_FALSE.include?(str)
+        return false if BOOLEAN_FALSE.include?(str)
+
+        nil
       end
 
       def self.coerce_array(value)
