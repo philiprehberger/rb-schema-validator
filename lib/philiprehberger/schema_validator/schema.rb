@@ -80,7 +80,7 @@ module Philiprehberger
       def check_inclusion(field, value, errors)
         return unless field.in
 
-        errors << "#{field.name} must be one of: #{field.in.join(", ")}" unless field.in.include?(value)
+        errors << "#{field.name} must be one of: #{field.in.join(', ')}" unless field.in.include?(value)
       end
 
       def check_range(field, value, errors)
