@@ -80,6 +80,32 @@ schema = Philiprehberger::SchemaValidator.define do
 end
 ```
 
+#### Format Presets
+
+Use built-in format presets instead of writing regex patterns:
+
+```ruby
+schema = Philiprehberger::SchemaValidator.define do
+  string :email, format: :email
+  string :website, format: :url
+  string :id, format: :uuid
+  string :created_at, format: :iso8601
+  string :phone, format: :phone
+end
+```
+
+Available presets:
+
+| Preset     | Matches                                          |
+|------------|--------------------------------------------------|
+| `:email`   | Basic email format (`user@domain.tld`)           |
+| `:url`     | HTTP/HTTPS URLs                                  |
+| `:uuid`    | UUID v4 format                                   |
+| `:iso8601` | ISO 8601 date and datetime                       |
+| `:phone`   | International phone numbers                      |
+
+Both symbol presets and `Regexp` values are supported for `format:`.
+
 #### `in:` — Allowlist Validation
 
 ```ruby
@@ -96,6 +122,104 @@ schema = Philiprehberger::SchemaValidator.define do
   float :score, min: 0.0, max: 100.0
 end
 ```
+
+### Nested Schema Validation
+
+Validate objects within objects using the `nested` DSL method:
+
+```ruby
+schema = Philiprehberger::SchemaValidator.define do
+  string :name, required: true
+  nested :address, required: true do
+    string :city, required: true
+    string :zip, required: true
+  end
+end
+
+result = schema.validate({ name: "Alice", address: { city: "Vienna" } })
+result.errors # => ["address.zip is required"]
+```
+
+Nested schemas support all the same field types and options. Nesting can go arbitrarily deep:
+
+```ruby
+schema = Philiprehberger::SchemaValidator.define do
+  nested :config, required: true do
+    nested :database, required: true do
+      string :host, required: true
+      integer :port, required: true
+    end
+  end
+end
+```
+
+### Array Element Validation
+
+Validate the type of each element in an array with `of:`:
+
+```ruby
+schema = Philiprehberger::SchemaValidator.define do
+  array :tags, of: :string
+  array :scores, of: :integer
+end
+
+result = schema.validate({ tags: ["a", "b"], scores: [1, "bad", 3] })
+result.errors # => ["scores[1] must be a integer"]
+```
+
+Validate arrays of objects with `schema:`:
+
+```ruby
+address_schema = Philiprehberger::SchemaValidator.define do
+  string :city, required: true
+  string :zip, required: true
+end
+
+schema = Philiprehberger::SchemaValidator.define do
+  array :addresses, schema: address_schema
+end
+
+result = schema.validate({ addresses: [{ city: "Vienna" }] })
+result.errors # => ["addresses[0].zip is required"]
+```
+
+### Cross-Field Validation
+
+Add schema-level validation blocks for relational checks between fields:
+
+```ruby
+schema = Philiprehberger::SchemaValidator.define do
+  integer :min_age, required: false
+  integer :max_age, required: false
+
+  validate do |data, errors|
+    if data[:min_age] && data[:max_age] && data[:min_age] > data[:max_age]
+      errors << "min_age must be less than or equal to max_age"
+    end
+  end
+end
+```
+
+Multiple `validate` blocks can be defined on the same schema.
+
+### Schema Composition
+
+Combine and extend schemas using `merge`:
+
+```ruby
+base = Philiprehberger::SchemaValidator.define do
+  string :name, required: true
+end
+
+extended = base.merge do
+  integer :age, required: false
+  string :email, required: true
+end
+
+extended.fields # => [:name, :age, :email]
+```
+
+The original schema is not modified. Nested schemas and cross-field validators are preserved in the merged schema.
 
 ### Schema Introspection
 
@@ -147,6 +271,10 @@ Validates a hash against the schema. Returns a `Result` object.
 ### `Schema#validate!(data)` -> `Result`
 
 Validates and raises `ValidationError` if invalid.
+
+### `Schema#merge(&block)` -> `Schema`
+
+Creates a new schema combining the current schema with additional definitions from the block.
 
 ### `Result#valid?` -> `Boolean`
 
