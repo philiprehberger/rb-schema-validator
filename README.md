@@ -1,6 +1,10 @@
-# Philiprehberger::SchemaValidator
+# philiprehberger-schema_validator
 
-Lightweight schema validation for Ruby hashes with type checking and coercion.
+[![Tests](https://github.com/philiprehberger/rb-schema-validator/actions/workflows/ci.yml/badge.svg)](https://github.com/philiprehberger/rb-schema-validator/actions/workflows/ci.yml)
+[![Gem Version](https://badge.fury.io/rb/philiprehberger-schema_validator.svg)](https://rubygems.org/gems/philiprehberger-schema_validator)
+[![License](https://img.shields.io/github/license/philiprehberger/rb-schema-validator)](LICENSE)
+
+Lightweight schema validation for Ruby hashes with type checking and coercion
 
 ## Requirements
 
@@ -8,7 +12,7 @@ Lightweight schema validation for Ruby hashes with type checking and coercion.
 
 ## Installation
 
-Add this line to your Gemfile:
+Add to your Gemfile:
 
 ```ruby
 gem "philiprehberger-schema_validator"
