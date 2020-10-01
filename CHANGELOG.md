@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.3] - 2026-03-24
+
+### Fixed
+- Align README one-liner with gemspec summary
+
 ## [0.3.2] - 2026-03-24
 
 ### Fixed
