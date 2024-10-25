@@ -23,6 +23,48 @@ module Philiprehberger
         end
       end
 
+      # Declare a conditional field dependency
+      #
+      # @param field [Symbol] the field that becomes required
+      # @param when_field [Hash] condition: { field_name => expected_value }
+      def depends_on(field, when_field:)
+        (@dependencies ||= []) << { field: field, when_field: when_field }
+      end
+
+      # Declare mutually exclusive fields
+      #
+      # @param name [Symbol] group name
+      # @param fields [Array<Symbol>] fields that are mutually exclusive
+      def exclusive_group(name, fields)
+        (@exclusive_groups ||= []) << { name: name, fields: fields }
+      end
+
+      # Create a sub-schema with only the specified fields
+      #
+      # @param base [Schema] the base schema
+      # @param field_names [Array<Symbol>] fields to include
+      # @return [Schema] new schema with only selected fields
+      def self.pick(base, *field_names)
+        new_schema = new {} # rubocop:disable Lint/EmptyBlock
+        base.instance_variable_get(:@fields).each do |name, field|
+          new_schema.instance_variable_get(:@fields)[name] = field if field_names.include?(name)
+        end
+        new_schema
+      end
+
+      # Create a sub-schema excluding the specified fields
+      #
+      # @param base [Schema] the base schema
+      # @param field_names [Array<Symbol>] fields to exclude
+      # @return [Schema] new schema without excluded fields
+      def self.omit(base, *field_names)
+        new_schema = new {} # rubocop:disable Lint/EmptyBlock
+        base.instance_variable_get(:@fields).each do |name, field|
+          new_schema.instance_variable_get(:@fields)[name] = field unless field_names.include?(name)
+        end
+        new_schema
+      end
+
       def nested(name, **opts, &)
         sub_schema = Schema.new(&)
         @nested_schemas[name] = { schema: sub_schema, required: opts.fetch(:required, false) }
@@ -38,7 +80,10 @@ module Philiprehberger
         @fields.each_value { |field| validate_field(field, data, errors) }
         @nested_schemas.each { |name, config| validate_nested(name, config, data, errors) }
         @cross_validators.each { |cv| cv.call(data, errors) }
-        Result.new(errors: errors)
+        result = Result.new(errors: errors)
+        validate_dependencies(data, result) if @dependencies&.any?
+        validate_exclusive_groups(data, result) if @exclusive_groups&.any?
+        result
       end
 
       def validate!(data)
@@ -96,6 +141,26 @@ module Philiprehberger
 
       def collect_nested_errors(name, schema, value, errors)
         schema.validate(value).errors.each { |err| errors << "#{name}.#{err}" }
+      end
+
+      def validate_dependencies(data, result)
+        @dependencies.each do |dep|
+          dep[:when_field].each do |cond_field, expected|
+            next unless data.key?(cond_field) && data[cond_field] == expected
+            next if data.key?(dep[:field]) && !data[dep[:field]].nil?
+
+            result.errors << "#{dep[:field]} is required when #{cond_field} is #{expected}"
+          end
+        end
+      end
+
+      def validate_exclusive_groups(data, result)
+        @exclusive_groups.each do |group|
+          present = group[:fields].select { |f| data.key?(f) && !data[f].nil? }
+          if present.length > 1
+            result.errors << "Only one of #{group[:fields].join(', ')} is allowed (#{group[:name]})"
+          end
+        end
       end
     end
   end
