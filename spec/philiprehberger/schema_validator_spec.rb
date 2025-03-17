@@ -789,4 +789,124 @@ RSpec.describe Philiprehberger::SchemaValidator do
       expect(result.valid?).to be true
     end
   end
+
+  describe '#to_json_schema' do
+    it 'exports basic field types' do
+      schema = described_class.define do
+        string :name
+        integer :age
+        float :score, required: false
+        boolean :active
+        array :tags, required: false
+        hash_field :metadata, required: false
+      end
+
+      json_schema = schema.to_json_schema
+      expect(json_schema['type']).to eq('object')
+      expect(json_schema['properties']['name']).to eq({ 'type' => 'string' })
+      expect(json_schema['properties']['age']).to eq({ 'type' => 'integer' })
+      expect(json_schema['properties']['score']).to eq({ 'type' => 'number' })
+      expect(json_schema['properties']['active']).to eq({ 'type' => 'boolean' })
+      expect(json_schema['properties']['tags']).to eq({ 'type' => 'array' })
+      expect(json_schema['properties']['metadata']).to eq({ 'type' => 'object' })
+      expect(json_schema['required']).to eq(%w[name age active])
+    end
+
+    it 'includes default values' do
+      schema = described_class.define do
+        string :role, required: false, default: 'user'
+      end
+
+      json_schema = schema.to_json_schema
+      expect(json_schema['properties']['role']).to eq({ 'type' => 'string', 'default' => 'user' })
+    end
+
+    it 'includes enum from in: option' do
+      schema = described_class.define do
+        string :status, in: %w[active inactive]
+      end
+
+      json_schema = schema.to_json_schema
+      expect(json_schema['properties']['status']['enum']).to eq(%w[active inactive])
+    end
+
+    it 'includes min/max as minimum/maximum' do
+      schema = described_class.define do
+        integer :age, min: 0, max: 150
+      end
+
+      json_schema = schema.to_json_schema
+      expect(json_schema['properties']['age']['minimum']).to eq(0)
+      expect(json_schema['properties']['age']['maximum']).to eq(150)
+    end
+
+    it 'includes array items type from of: option' do
+      schema = described_class.define do
+        array :tags, of: :string
+      end
+
+      json_schema = schema.to_json_schema
+      expect(json_schema['properties']['tags']['items']).to eq({ 'type' => 'string' })
+    end
+
+    it 'includes array items schema from schema: option' do
+      address_schema = described_class.define do
+        string :city, required: true
+      end
+
+      schema = described_class.define do
+        array :addresses, schema: address_schema
+      end
+
+      json_schema = schema.to_json_schema
+      items = json_schema['properties']['addresses']['items']
+      expect(items['type']).to eq('object')
+      expect(items['properties']['city']).to eq({ 'type' => 'string' })
+      expect(items['required']).to eq(%w[city])
+    end
+
+    it 'includes format preset as format string' do
+      schema = described_class.define do
+        string :email, format: :email
+      end
+
+      json_schema = schema.to_json_schema
+      expect(json_schema['properties']['email']['format']).to eq('email')
+    end
+
+    it 'includes regex format as pattern' do
+      schema = described_class.define do
+        string :code, format: /\A[A-Z]{3}\z/
+      end
+
+      json_schema = schema.to_json_schema
+      expect(json_schema['properties']['code']['pattern']).to eq('\A[A-Z]{3}\z')
+    end
+
+    it 'exports nested schemas' do
+      schema = described_class.define do
+        string :name
+        nested :address, required: true do
+          string :city, required: true
+          string :zip, required: true
+        end
+      end
+
+      json_schema = schema.to_json_schema
+      expect(json_schema['required']).to include('address')
+      address = json_schema['properties']['address']
+      expect(address['type']).to eq('object')
+      expect(address['properties']['city']).to eq({ 'type' => 'string' })
+      expect(address['required']).to eq(%w[city zip])
+    end
+
+    it 'omits required key when no fields are required' do
+      schema = described_class.define do
+        string :name, required: false
+      end
+
+      json_schema = schema.to_json_schema
+      expect(json_schema).not_to have_key('required')
+    end
+  end
 end

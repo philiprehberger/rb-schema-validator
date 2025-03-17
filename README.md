@@ -274,6 +274,29 @@ sub = Schema.pick(base_schema, :name, :email)
 sub = Schema.omit(base_schema, :age)
 ```
 
+### JSON Schema Export
+
+Export a schema as a simplified JSON Schema (draft 7) hash:
+
+```ruby
+schema = Philiprehberger::SchemaValidator.define do
+  string :name
+  integer :age, min: 0, max: 150
+  array :tags, of: :string, required: false
+end
+
+schema.to_json_schema
+# => {
+#   "type" => "object",
+#   "properties" => {
+#     "name" => { "type" => "string" },
+#     "age"  => { "type" => "integer", "minimum" => 0, "maximum" => 150 },
+#     "tags" => { "type" => "array", "items" => { "type" => "string" } }
+#   },
+#   "required" => ["name", "age"]
+# }
+```
+
 ## API
 
 ### `SchemaValidator`
@@ -294,6 +317,7 @@ sub = Schema.omit(base_schema, :age)
 | `exclusive_group(name, fields)` | Mutual exclusivity validation |
 | `Schema.pick(base, *fields)` | Sub-schema with selected fields |
 | `Schema.omit(base, *fields)` | Sub-schema excluding fields |
+| `#to_json_schema` | Export schema as a JSON Schema (draft 7) hash |
 
 ### `Result`
 
