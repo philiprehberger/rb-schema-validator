@@ -127,6 +127,31 @@ schema = Philiprehberger::SchemaValidator.define do
 end
 ```
 
+#### `length:` — String and Array Length Validation
+
+Constrain the length of strings and arrays with an `Integer` (exact) or `Range` (bounded, endless, or beginless):
+
+```ruby
+schema = Philiprehberger::SchemaValidator.define do
+  string :username, length: 3..20           # between 3 and 20 chars
+  string :code, length: 4                   # exactly 4 chars
+  string :password, length: (8..)           # at least 8 chars
+  string :note, length: (..280)             # at most 280 chars
+  array :tags, length: 1..5                 # between 1 and 5 elements
+end
+
+result = schema.validate({ username: 'al', code: 'ABC', password: 'short', note: 'ok', tags: [] })
+result.errors
+# => [
+#   "username length must be between 3 and 20 (got 2)",
+#   "code length must be exactly 4 (got 3)",
+#   "password length must be >= 8 (got 5)",
+#   "tags length must be between 1 and 5 (got 0)"
+# ]
+```
+
+Length constraints are also exported to JSON Schema as `minLength`/`maxLength` (strings) and `minItems`/`maxItems` (arrays).
+
 ### Nested Schema Validation
 
 Validate objects within objects using the `nested` DSL method:
@@ -274,6 +299,38 @@ sub = Schema.pick(base_schema, :name, :email)
 sub = Schema.omit(base_schema, :age)
 ```
 
+### Strict Mode
+
+Reject any keys that are not declared in the schema by calling `strict!` inside the DSL block:
+
+```ruby
+schema = Philiprehberger::SchemaValidator.define do
+  string :name, required: true
+  integer :age, required: false
+  strict!
+end
+
+result = schema.validate({ name: "Alice", age: 30, extra: "nope" })
+result.errors # => ["extra is not a recognized key"]
+```
+
+Strict mode is preserved across `merge` and exported to JSON Schema as `additionalProperties: false`.
+
+### Structured Result Output
+
+`Result` exposes helpers for rendering errors in logs, APIs, or UIs:
+
+```ruby
+result = schema.validate({})
+
+result.valid?          # => false
+result.error_count     # => 2
+result.to_h            # => { valid: false, errors: [...], error_count: 2 }
+result.errors_by_field # => { "name" => ["name is required"], "address" => ["address.city is required"] }
+```
+
+`errors_by_field` groups errors by the leading field segment, so nested errors like `address.city is required` are grouped under `"address"`.
+
 ### JSON Schema Export
 
 Export a schema as a simplified JSON Schema (draft 7) hash:
@@ -313,11 +370,26 @@ schema.to_json_schema
 | `#validate(data)` | Validate a hash against the schema; returns a `Result` |
 | `#validate!(data)` | Validate and raise `ValidationError` if invalid |
 | `#merge(&block)` | Create a new schema combining current fields with additional definitions |
+| `#strict!` | Reject unknown keys not declared in the schema |
+| `#strict?` | Return `true` if the schema rejects unknown keys |
 | `depends_on(field, when_field:)` | Conditional field requirement |
 | `exclusive_group(name, fields)` | Mutual exclusivity validation |
 | `Schema.pick(base, *fields)` | Sub-schema with selected fields |
 | `Schema.omit(base, *fields)` | Sub-schema excluding fields |
 | `#to_json_schema` | Export schema as a JSON Schema (draft 7) hash |
+
+### Field Options
+
+| Option | Applies to | Description |
+|--------|-----------|-------------|
+| `required:` | all types | Mark field as required (default `true`) |
+| `default:` | all types | Default value when the field is absent |
+| `format:` | `string` | Regex or preset (`:email`, `:url`, `:uuid`, `:iso8601`, `:phone`) |
+| `in:` | all types | Allowlist of acceptable values |
+| `min:` / `max:` | `integer`, `float` | Numeric range bounds |
+| `length:` | `string`, `array` | Exact length (Integer) or length range (Range) |
+| `of:` | `array` | Element type (`:string`, `:integer`, ...) |
+| `schema:` | `array` | Sub-schema each element must satisfy |
 
 ### `Result`
 
@@ -325,6 +397,9 @@ schema.to_json_schema
 |--------|-------------|
 | `#valid?` | Return `true` if there are no errors |
 | `#errors` | Array of error message strings |
+| `#error_count` | Number of errors in the result |
+| `#to_h` | Structured hash: `{ valid:, errors:, error_count: }` |
+| `#errors_by_field` | Group errors by the leading field name |
 
 ## Development
 

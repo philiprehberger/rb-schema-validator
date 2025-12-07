@@ -909,4 +909,253 @@ RSpec.describe Philiprehberger::SchemaValidator do
       expect(json_schema).not_to have_key('required')
     end
   end
+
+  describe 'length constraint' do
+    context 'with a Range' do
+      subject(:schema) do
+        described_class.define do
+          string :name, length: 3..20
+          array :tags, length: 1..5
+        end
+      end
+
+      it 'passes when string length is within range' do
+        result = schema.validate({ name: 'Alice', tags: %w[a b] })
+        expect(result).to be_valid
+      end
+
+      it 'fails when string is too short' do
+        result = schema.validate({ name: 'Al', tags: %w[a] })
+        expect(result).not_to be_valid
+        expect(result.errors).to include('name length must be between 3 and 20 (got 2)')
+      end
+
+      it 'fails when string is too long' do
+        result = schema.validate({ name: 'x' * 21, tags: %w[a] })
+        expect(result).not_to be_valid
+        expect(result.errors).to include('name length must be between 3 and 20 (got 21)')
+      end
+
+      it 'fails when array is empty and minimum is 1' do
+        result = schema.validate({ name: 'Alice', tags: [] })
+        expect(result).not_to be_valid
+        expect(result.errors).to include('tags length must be between 1 and 5 (got 0)')
+      end
+
+      it 'fails when array exceeds max length' do
+        result = schema.validate({ name: 'Alice', tags: %w[a b c d e f] })
+        expect(result).not_to be_valid
+        expect(result.errors).to include('tags length must be between 1 and 5 (got 6)')
+      end
+    end
+
+    context 'with an exact Integer' do
+      subject(:schema) do
+        described_class.define do
+          string :code, length: 4
+        end
+      end
+
+      it 'passes when length matches exactly' do
+        result = schema.validate({ code: 'ABCD' })
+        expect(result).to be_valid
+      end
+
+      it 'fails when length does not match exactly' do
+        result = schema.validate({ code: 'ABCDE' })
+        expect(result).not_to be_valid
+        expect(result.errors).to include('code length must be exactly 4 (got 5)')
+      end
+    end
+
+    context 'with an open-ended Range' do
+      it 'supports minimum only via endless range' do
+        schema = described_class.define do
+          string :password, length: (8..)
+        end
+
+        short = schema.validate({ password: 'short' })
+        expect(short).not_to be_valid
+        expect(short.errors).to include('password length must be >= 8 (got 5)')
+
+        long = schema.validate({ password: 'longenough' })
+        expect(long).to be_valid
+      end
+
+      it 'supports maximum only via beginless range' do
+        schema = described_class.define do
+          string :note, length: (..10)
+        end
+
+        long = schema.validate({ note: 'a' * 11 })
+        expect(long).not_to be_valid
+        expect(long.errors).to include('note length must be <= 10 (got 11)')
+
+        ok = schema.validate({ note: 'ok' })
+        expect(ok).to be_valid
+      end
+    end
+
+    it 'raises ArgumentError for invalid length type' do
+      schema = described_class.define do
+        string :name, length: 'invalid'
+      end
+
+      expect { schema.validate({ name: 'Alice' }) }
+        .to raise_error(ArgumentError, /length must be an Integer or Range/)
+    end
+
+    it 'exports length to JSON Schema as minLength/maxLength for strings' do
+      schema = described_class.define do
+        string :name, length: 3..20
+      end
+
+      json_schema = schema.to_json_schema
+      expect(json_schema['properties']['name']['minLength']).to eq(3)
+      expect(json_schema['properties']['name']['maxLength']).to eq(20)
+    end
+
+    it 'exports length to JSON Schema as minItems/maxItems for arrays' do
+      schema = described_class.define do
+        array :tags, length: 1..5
+      end
+
+      json_schema = schema.to_json_schema
+      expect(json_schema['properties']['tags']['minItems']).to eq(1)
+      expect(json_schema['properties']['tags']['maxItems']).to eq(5)
+    end
+  end
+
+  describe 'strict mode' do
+    subject(:schema) do
+      described_class.define do
+        string :name, required: true
+        integer :age, required: false
+        strict!
+      end
+    end
+
+    it 'is reported via strict?' do
+      expect(schema.strict?).to be true
+    end
+
+    it 'passes when all keys are known' do
+      result = schema.validate({ name: 'Alice', age: 30 })
+      expect(result).to be_valid
+    end
+
+    it 'rejects unknown keys' do
+      result = schema.validate({ name: 'Alice', extra: 'nope' })
+      expect(result).not_to be_valid
+      expect(result.errors).to include('extra is not a recognized key')
+    end
+
+    it 'reports each unknown key separately' do
+      result = schema.validate({ name: 'Alice', foo: 1, bar: 2 })
+      expect(result).not_to be_valid
+      expect(result.errors).to include('foo is not a recognized key')
+      expect(result.errors).to include('bar is not a recognized key')
+    end
+
+    it 'accepts declared nested schema keys' do
+      schema = described_class.define do
+        string :name, required: true
+        nested :address do
+          string :city, required: true
+        end
+        strict!
+      end
+
+      result = schema.validate({ name: 'Alice', address: { city: 'Vienna' } })
+      expect(result).to be_valid
+    end
+
+    it 'is not strict by default' do
+      loose = described_class.define { string :name }
+      expect(loose.strict?).to be false
+
+      result = loose.validate({ name: 'Alice', extra: 'allowed' })
+      expect(result).to be_valid
+    end
+
+    it 'is preserved across merge' do
+      extended = schema.merge do
+        string :email, required: false
+      end
+
+      expect(extended.strict?).to be true
+      result = extended.validate({ name: 'Alice', email: 'a@b.co', unknown: 1 })
+      expect(result).not_to be_valid
+      expect(result.errors).to include('unknown is not a recognized key')
+    end
+
+    it 'emits additionalProperties: false in JSON Schema export' do
+      json_schema = schema.to_json_schema
+      expect(json_schema['additionalProperties']).to be false
+    end
+  end
+
+  describe 'Result structured output' do
+    let(:schema) do
+      described_class.define do
+        string :name, required: true
+        integer :age, required: true
+      end
+    end
+
+    describe '#to_h' do
+      it 'returns a hash for a valid result' do
+        result = schema.validate({ name: 'Alice', age: 30 })
+        expect(result.to_h).to eq(valid: true, errors: [], error_count: 0)
+      end
+
+      it 'returns errors and error_count for an invalid result' do
+        result = schema.validate({})
+        hash = result.to_h
+        expect(hash[:valid]).to be false
+        expect(hash[:error_count]).to eq(2)
+        expect(hash[:errors]).to include('name is required', 'age is required')
+      end
+
+      it 'returns a copy of errors so callers cannot mutate internal state' do
+        result = schema.validate({})
+        result.to_h[:errors] << 'tampered'
+        expect(result.errors).not_to include('tampered')
+      end
+    end
+
+    describe '#error_count' do
+      it 'returns zero on a valid result' do
+        result = schema.validate({ name: 'Alice', age: 30 })
+        expect(result.error_count).to eq(0)
+      end
+
+      it 'returns the number of errors on an invalid result' do
+        result = schema.validate({})
+        expect(result.error_count).to eq(2)
+      end
+    end
+
+    describe '#errors_by_field' do
+      it 'groups errors by leading field segment' do
+        nested_schema = described_class.define do
+          string :name, required: true
+          nested :address, required: true do
+            string :city, required: true
+            string :zip, required: true
+          end
+        end
+
+        result = nested_schema.validate({ address: {} })
+        grouped = result.errors_by_field
+        expect(grouped['name']).to eq(['name is required'])
+        expect(grouped['address']).to include('address.city is required', 'address.zip is required')
+      end
+
+      it 'returns an empty hash when there are no errors' do
+        result = schema.validate({ name: 'Alice', age: 30 })
+        expect(result.errors_by_field).to eq({})
+      end
+    end
+  end
 end

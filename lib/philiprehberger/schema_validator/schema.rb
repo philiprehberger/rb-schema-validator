@@ -13,6 +13,7 @@ module Philiprehberger
         @fields = {}
         @nested_schemas = {}
         @cross_validators = []
+        @strict = false
         instance_eval(&block) if block
       end
 
@@ -21,6 +22,20 @@ module Philiprehberger
         define_method(method_name) do |name, **opts, &validator|
           @fields[name] = Field.new(name, type, **opts, &validator)
         end
+      end
+
+      # Enable strict mode — unknown keys in validated data will produce errors
+      #
+      # @return [void]
+      def strict!
+        @strict = true
+      end
+
+      # Whether this schema rejects unknown keys
+      #
+      # @return [Boolean]
+      def strict?
+        @strict == true
       end
 
       # Declare a conditional field dependency
@@ -80,6 +95,7 @@ module Philiprehberger
         @fields.each_value { |field| validate_field(field, data, errors) }
         @nested_schemas.each { |name, config| validate_nested(name, config, data, errors) }
         @cross_validators.each { |cv| cv.call(data, errors) }
+        validate_unknown_keys(data, errors) if strict?
         result = Result.new(errors: errors)
         validate_dependencies(data, result) if @dependencies&.any?
         validate_exclusive_groups(data, result) if @exclusive_groups&.any?
@@ -119,6 +135,7 @@ module Philiprehberger
           'properties' => properties
         }
         schema['required'] = required_fields unless required_fields.empty?
+        schema['additionalProperties'] = false if strict?
         schema
       end
 
@@ -127,6 +144,7 @@ module Philiprehberger
         new_schema.instance_variable_set(:@fields, @fields.dup)
         new_schema.instance_variable_set(:@nested_schemas, @nested_schemas.dup)
         new_schema.instance_variable_set(:@cross_validators, @cross_validators.dup)
+        new_schema.instance_variable_set(:@strict, @strict)
         new_schema.instance_eval(&block) if block
         new_schema
       end
@@ -148,6 +166,7 @@ module Philiprehberger
         prop['enum'] = field.in.dup if field.in
         prop['minimum'] = field.min if field.min
         prop['maximum'] = field.max if field.max
+        apply_length_to_json_schema(prop, field) if field.length
 
         if field.type == :array
           if field.of
@@ -164,6 +183,14 @@ module Philiprehberger
         end
 
         prop
+      end
+
+      def apply_length_to_json_schema(prop, field)
+        range = field.length.is_a?(Range) ? field.length : (field.length..field.length)
+        min_key = field.type == :array ? 'minItems' : 'minLength'
+        max_key = field.type == :array ? 'maxItems' : 'maxLength'
+        prop[min_key] = range.begin if range.begin
+        prop[max_key] = range.end if range.end && range.end != Float::INFINITY
       end
 
       def validate_field(field, data, errors)
@@ -199,6 +226,15 @@ module Philiprehberger
 
       def collect_nested_errors(name, schema, value, errors)
         schema.validate(value).errors.each { |err| errors << "#{name}.#{err}" }
+      end
+
+      def validate_unknown_keys(data, errors)
+        return unless data.is_a?(Hash)
+
+        known = @fields.keys + @nested_schemas.keys
+        data.each_key do |key|
+          errors << "#{key} is not a recognized key" unless known.include?(key)
+        end
       end
 
       def validate_dependencies(data, result)

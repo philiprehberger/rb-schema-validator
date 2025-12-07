@@ -3,11 +3,12 @@
 module Philiprehberger
   module SchemaValidator
     class Field
-      attr_reader :name, :type, :default, :validator, :format, :in, :min, :max, :of, :schema
+      attr_reader :name, :type, :default, :validator, :format, :in, :min, :max, :of, :schema, :length
 
-      def initialize(name, type, required: true, default: nil, format: nil, in: nil, min: nil, max: nil, of: nil, schema: nil, &validator) # rubocop:disable Metrics/ParameterLists
+      def initialize(name, type, required: true, default: nil, format: nil, in: nil, min: nil, max: nil, # rubocop:disable Metrics/ParameterLists
+                     of: nil, schema: nil, length: nil, &validator)
         assign_basic_attrs(name, type, required, default, format)
-        assign_constraint_attrs(binding.local_variable_get(:in), min, max, of, schema)
+        assign_constraint_attrs(binding.local_variable_get(:in), min, max, of, schema, length)
         @validator = validator
       end
 
@@ -25,12 +26,13 @@ module Philiprehberger
         @format = format
       end
 
-      def assign_constraint_attrs(inclusion, min, max, of, schema)
+      def assign_constraint_attrs(inclusion, min, max, of, schema, length)
         @in = inclusion
         @min = min
         @max = max
         @of = of
         @schema = schema
+        @length = length
       end
     end
   end
