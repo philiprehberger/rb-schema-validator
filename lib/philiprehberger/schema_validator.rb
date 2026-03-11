@@ -1,0 +1,15 @@
+# frozen_string_literal: true
+
+require_relative "schema_validator/version"
+require_relative "schema_validator/field"
+require_relative "schema_validator/result"
+require_relative "schema_validator/coercer"
+require_relative "schema_validator/schema"
+
+module Philiprehberger
+  module SchemaValidator
+    def self.define(&block)
+      Schema.new(&block)
+    end
+  end
+end
