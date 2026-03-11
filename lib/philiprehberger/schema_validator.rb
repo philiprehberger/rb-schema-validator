@@ -8,8 +8,8 @@ require_relative "schema_validator/schema"
 
 module Philiprehberger
   module SchemaValidator
-    def self.define(&block)
-      Schema.new(&block)
+    def self.define(&)
+      Schema.new(&)
     end
   end
 end
