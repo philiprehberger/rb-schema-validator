@@ -3,13 +3,17 @@
 module Philiprehberger
   module SchemaValidator
     class Field
-      attr_reader :name, :type, :default, :validator
+      attr_reader :name, :type, :default, :validator, :format, :in, :min, :max
 
-      def initialize(name, type, required: true, default: nil, &validator)
+      def initialize(name, type, required: true, default: nil, format: nil, in: nil, min: nil, max: nil, &validator)
         @name = name
         @type = type
         @required = required
         @default = default
+        @format = format
+        @in = binding.local_variable_get(:in)
+        @min = min
+        @max = max
         @validator = validator
       end
 

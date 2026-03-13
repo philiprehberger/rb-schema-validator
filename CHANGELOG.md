@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-03-13
+
+### Added
+- `format:` option for regex pattern validation on string fields
+- `in:` option for enum/allowlist validation on any field
+- `min:` / `max:` options for numeric range validation on integer and float fields
+- `fields` accessor on `Schema` for introspecting defined field names
+
+### Fixed
+- `coerce_boolean` now returns `nil` for unrecognized values instead of implicit `nil` that behaved as `false`
+
 ## [0.1.0] - 2026-03-10
 
 ### Added

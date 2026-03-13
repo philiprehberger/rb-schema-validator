@@ -66,6 +66,44 @@ result = schema.validate({ count: "123", enabled: "true" })
 result.valid? # => true
 ```
 
+### Validation Options
+
+#### `format:` — Regex Pattern Validation
+
+```ruby
+schema = Philiprehberger::SchemaValidator.define do
+  string :email, format: /\A[^@\s]+@[^@\s]+\z/
+end
+```
+
+#### `in:` — Allowlist Validation
+
+```ruby
+schema = Philiprehberger::SchemaValidator.define do
+  string :role, in: %w[admin user guest]
+end
+```
+
+#### `min:` / `max:` — Numeric Range Validation
+
+```ruby
+schema = Philiprehberger::SchemaValidator.define do
+  integer :age, min: 0, max: 150
+  float :score, min: 0.0, max: 100.0
+end
+```
+
+### Schema Introspection
+
+```ruby
+schema = Philiprehberger::SchemaValidator.define do
+  string :name
+  integer :age
+end
+
+schema.fields # => [:name, :age]
+```
+
 ### Custom Validation
 
 Pass a block to any field definition for custom validation. Return a string to indicate an error:
@@ -93,6 +131,10 @@ end
 ### `Philiprehberger::SchemaValidator.define(&block)` -> `Schema`
 
 Creates a new schema using the DSL block.
+
+### `Schema#fields` -> `Array<Symbol>`
+
+Returns the list of defined field names.
 
 ### `Schema#validate(data)` -> `Result`
 
