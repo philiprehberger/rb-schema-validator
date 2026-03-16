@@ -2,6 +2,10 @@
 
 Lightweight schema validation for Ruby hashes with type checking and coercion.
 
+## Requirements
+
+- Ruby >= 3.1
+
 ## Installation
 
 Add this line to your Gemfile:
@@ -151,6 +155,15 @@ Returns `true` if there are no errors.
 ### `Result#errors` -> `Array<String>`
 
 Array of error message strings.
+
+
+## Development
+
+```bash
+bundle install
+bundle exec rspec
+bundle exec rubocop
+```
 
 ## License
 
