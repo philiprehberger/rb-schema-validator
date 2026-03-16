@@ -5,7 +5,7 @@ module Philiprehberger
     class Field
       attr_reader :name, :type, :default, :validator, :format, :in, :min, :max
 
-      def initialize(name, type, required: true, default: nil, format: nil, in: nil, min: nil, max: nil, &validator)
+      def initialize(name, type, required: true, default: nil, format: nil, in: nil, min: nil, max: nil, &validator) # rubocop:disable Metrics/ParameterLists
         @name = name
         @type = type
         @required = required
