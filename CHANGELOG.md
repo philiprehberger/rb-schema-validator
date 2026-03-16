@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.2
+
+- Fix rubocop: string interpolation style, ParameterLists cop
+
 ## 0.2.1
 
 - Add License badge to README
