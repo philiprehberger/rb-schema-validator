@@ -663,9 +663,7 @@ RSpec.describe Philiprehberger::SchemaValidator do
         integer :max_val, required: false
 
         validate do |data, errors|
-          if data[:min_val] && data[:max_val] && data[:min_val] > data[:max_val]
-            errors << "min_val must be <= max_val"
-          end
+          errors << "min_val must be <= max_val" if data[:min_val] && data[:max_val] && data[:min_val] > data[:max_val]
         end
       end
 
