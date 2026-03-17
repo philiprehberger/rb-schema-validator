@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3.0
+
+### Added
+- Nested schema validation via `nested` DSL method with recursive error prefixing
+- Array element validation with `of:` option for type-checked elements
+- Array of objects validation with `schema:` option
+- Built-in format presets: `:email`, `:url`, `:uuid`, `:iso8601`, `:phone`
+- Cross-field validation via `validate` block at schema level
+- Schema composition via `merge` method to combine and extend schemas
+
 ## 0.2.2
 
 - Fix rubocop: string interpolation style, ParameterLists cop

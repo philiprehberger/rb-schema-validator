@@ -3,9 +3,9 @@
 module Philiprehberger
   module SchemaValidator
     class Field
-      attr_reader :name, :type, :default, :validator, :format, :in, :min, :max
+      attr_reader :name, :type, :default, :validator, :format, :in, :min, :max, :of, :schema
 
-      def initialize(name, type, required: true, default: nil, format: nil, in: nil, min: nil, max: nil, &validator) # rubocop:disable Metrics/ParameterLists
+      def initialize(name, type, required: true, default: nil, format: nil, in: nil, min: nil, max: nil, of: nil, schema: nil, &validator) # rubocop:disable Metrics/ParameterLists
         @name = name
         @type = type
         @required = required
@@ -14,6 +14,8 @@ module Philiprehberger
         @in = binding.local_variable_get(:in)
         @min = min
         @max = max
+        @of = of
+        @schema = schema
         @validator = validator
       end
 
