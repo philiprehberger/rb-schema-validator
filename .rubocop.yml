@@ -22,3 +22,6 @@ Layout/LineLength:
 
 Naming/PredicateMethod:
   Enabled: false
+
+Layout/EndOfLine:
+  Enabled: false

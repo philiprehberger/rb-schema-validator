@@ -247,17 +247,6 @@ schema = Philiprehberger::SchemaValidator.define do
 end
 ```
 
-## Supported Types
-
-| DSL Method   | Ruby Type | Coerces From       |
-|-------------|-----------|-------------------|
-| `string`    | String    | any (via `to_s`)  |
-| `integer`   | Integer   | String            |
-| `float`     | Float     | String            |
-| `boolean`   | Boolean   | String (true/false/yes/no/1/0/on/off) |
-| `array`     | Array     | -                 |
-| `hash_field`| Hash      | -                 |
-
 ## API
 
 ### `Philiprehberger::SchemaValidator.define(&block)` -> `Schema`
