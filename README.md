@@ -249,34 +249,27 @@ end
 
 ## API
 
-### `Philiprehberger::SchemaValidator.define(&block)` -> `Schema`
+### `SchemaValidator`
 
-Creates a new schema using the DSL block.
+| Method | Description |
+|--------|-------------|
+| `.define(&block)` | Create a new schema using the DSL block |
 
-### `Schema#fields` -> `Array<Symbol>`
+### `Schema`
 
-Returns the list of defined field names.
+| Method | Description |
+|--------|-------------|
+| `#fields` | Return the list of defined field names |
+| `#validate(data)` | Validate a hash against the schema; returns a `Result` |
+| `#validate!(data)` | Validate and raise `ValidationError` if invalid |
+| `#merge(&block)` | Create a new schema combining current fields with additional definitions |
 
-### `Schema#validate(data)` -> `Result`
+### `Result`
 
-Validates a hash against the schema. Returns a `Result` object.
-
-### `Schema#validate!(data)` -> `Result`
-
-Validates and raises `ValidationError` if invalid.
-
-### `Schema#merge(&block)` -> `Schema`
-
-Creates a new schema combining the current schema with additional definitions from the block.
-
-### `Result#valid?` -> `Boolean`
-
-Returns `true` if there are no errors.
-
-### `Result#errors` -> `Array<String>`
-
-Array of error message strings.
-
+| Method | Description |
+|--------|-------------|
+| `#valid?` | Return `true` if there are no errors |
+| `#errors` | Array of error message strings |
 
 ## Development
 
