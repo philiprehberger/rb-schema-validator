@@ -4,7 +4,7 @@
 [![Gem Version](https://badge.fury.io/rb/philiprehberger-schema_validator.svg)](https://rubygems.org/gems/philiprehberger-schema_validator)
 [![License](https://img.shields.io/github/license/philiprehberger/rb-schema-validator)](LICENSE)
 
-Lightweight schema validation for Ruby hashes with type checking and coercion
+Lightweight schema validation for hashes with type coercion
 
 ## Requirements
 
