@@ -5,7 +5,7 @@ module Philiprehberger
     class Field
       attr_reader :name, :type, :default, :validator, :format, :in, :min, :max, :of, :schema
 
-      def initialize(name, type, required: true, default: nil, format: nil, in: nil, min: nil, max: nil, of: nil, schema: nil, &validator) # rubocop:disable Metrics/ParameterLists,Layout/LineLength
+      def initialize(name, type, required: true, default: nil, format: nil, in: nil, min: nil, max: nil, of: nil, schema: nil, &validator) # rubocop:disable Metrics/ParameterLists
         assign_basic_attrs(name, type, required, default, format)
         assign_constraint_attrs(binding.local_variable_get(:in), min, max, of, schema)
         @validator = validator
