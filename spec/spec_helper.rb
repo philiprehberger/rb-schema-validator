@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "philiprehberger/schema_validator"
+require 'philiprehberger/schema_validator'
 
 RSpec.configure do |config|
   config.expect_with :rspec do |expectations|

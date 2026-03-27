@@ -43,7 +43,7 @@ module Philiprehberger
 
       def validate!(data)
         result = validate(data)
-        raise ValidationError, result.errors.join(", ") unless result.valid?
+        raise ValidationError, result.errors.join(', ') unless result.valid?
 
         result
       end
