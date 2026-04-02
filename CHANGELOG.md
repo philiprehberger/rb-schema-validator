@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-04-01
+
+### Added
+- `depends_on(field, when_field:)` for conditional field dependencies
+- `exclusive_group(name, fields)` for mutual exclusivity validation
+- `Schema.pick(base, *fields)` for creating sub-schemas with selected fields
+- `Schema.omit(base, *fields)` for creating sub-schemas excluding fields
+
 ## [0.3.6] - 2026-03-31
 
 ### Added

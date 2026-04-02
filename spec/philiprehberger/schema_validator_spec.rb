@@ -700,4 +700,93 @@ RSpec.describe Philiprehberger::SchemaValidator do
       expect(extended.fields).to eq(%i[name age score])
     end
   end
+
+  describe 'depends_on' do
+    it 'requires field when condition is met' do
+      schema = Philiprehberger::SchemaValidator.define do
+        string :country, required: true
+        string :state, required: false
+        depends_on :state, when_field: { country: 'US' }
+      end
+
+      result = schema.validate({ country: 'US' })
+      expect(result.valid?).to be false
+      expect(result.errors.first).to include('state')
+    end
+
+    it 'does not require field when condition is not met' do
+      schema = Philiprehberger::SchemaValidator.define do
+        string :country, required: true
+        string :state, required: false
+        depends_on :state, when_field: { country: 'US' }
+      end
+
+      result = schema.validate({ country: 'UK' })
+      expect(result.valid?).to be true
+    end
+
+    it 'passes when dependent field is present' do
+      schema = Philiprehberger::SchemaValidator.define do
+        string :country, required: true
+        string :state, required: false
+        depends_on :state, when_field: { country: 'US' }
+      end
+
+      result = schema.validate({ country: 'US', state: 'NY' })
+      expect(result.valid?).to be true
+    end
+  end
+
+  describe 'exclusive_group' do
+    it 'rejects when multiple exclusive fields are present' do
+      schema = Philiprehberger::SchemaValidator.define do
+        string :credit_card, required: false
+        string :bank_account, required: false
+        exclusive_group :payment, %i[credit_card bank_account]
+      end
+
+      result = schema.validate({ credit_card: '1234', bank_account: '5678' })
+      expect(result.valid?).to be false
+      expect(result.errors.first).to include('payment')
+    end
+
+    it 'allows single field from exclusive group' do
+      schema = Philiprehberger::SchemaValidator.define do
+        string :credit_card, required: false
+        string :bank_account, required: false
+        exclusive_group :payment, %i[credit_card bank_account]
+      end
+
+      result = schema.validate({ credit_card: '1234' })
+      expect(result.valid?).to be true
+    end
+  end
+
+  describe '.pick' do
+    it 'creates sub-schema with only selected fields' do
+      base = Philiprehberger::SchemaValidator.define do
+        string :name, required: true
+        integer :age, required: true
+        string :email, required: false
+      end
+
+      sub = Philiprehberger::SchemaValidator::Schema.pick(base, :name, :email)
+      result = sub.validate({ name: 'Alice' })
+      expect(result.valid?).to be true
+    end
+  end
+
+  describe '.omit' do
+    it 'creates sub-schema excluding fields' do
+      base = Philiprehberger::SchemaValidator.define do
+        string :name, required: true
+        integer :age, required: true
+        string :email, required: false
+      end
+
+      sub = Philiprehberger::SchemaValidator::Schema.omit(base, :age)
+      result = sub.validate({ name: 'Alice' })
+      expect(result.valid?).to be true
+    end
+  end
 end

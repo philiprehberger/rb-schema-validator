@@ -247,6 +247,33 @@ schema = Philiprehberger::SchemaValidator.define do
 end
 ```
 
+### Conditional Dependencies
+
+```ruby
+schema = Philiprehberger::SchemaValidator.define do
+  string :country, required: true
+  string :state
+  depends_on :state, when_field: { country: "US" }
+end
+```
+
+### Exclusive Groups
+
+```ruby
+schema = Philiprehberger::SchemaValidator.define do
+  string :credit_card
+  string :bank_account
+  exclusive_group :payment, %i[credit_card bank_account]
+end
+```
+
+### Schema Projection
+
+```ruby
+sub = Schema.pick(base_schema, :name, :email)
+sub = Schema.omit(base_schema, :age)
+```
+
 ## API
 
 ### `SchemaValidator`
@@ -263,6 +290,10 @@ end
 | `#validate(data)` | Validate a hash against the schema; returns a `Result` |
 | `#validate!(data)` | Validate and raise `ValidationError` if invalid |
 | `#merge(&block)` | Create a new schema combining current fields with additional definitions |
+| `depends_on(field, when_field:)` | Conditional field requirement |
+| `exclusive_group(name, fields)` | Mutual exclusivity validation |
+| `Schema.pick(base, *fields)` | Sub-schema with selected fields |
+| `Schema.omit(base, *fields)` | Sub-schema excluding fields |
 
 ### `Result`
 
