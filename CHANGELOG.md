@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-04-04
+
+### Added
+- `to_json_schema` method on `Schema` for exporting a simplified JSON Schema (draft 7) representation
+- Gem version field in bug report issue template
+- Alternatives considered textarea in feature request issue template
+
 ## [0.4.0] - 2026-04-01
 
 ### Added

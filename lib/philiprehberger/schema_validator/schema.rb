@@ -97,6 +97,31 @@ module Philiprehberger
         @fields.keys
       end
 
+      # Export a simplified JSON Schema (draft 7) representation
+      #
+      # @return [Hash] a hash compatible with JSON Schema draft 7
+      def to_json_schema
+        properties = {}
+        required_fields = []
+
+        @fields.each do |name, field|
+          properties[name.to_s] = field_to_json_schema(field)
+          required_fields << name.to_s if field.required?
+        end
+
+        @nested_schemas.each do |name, config|
+          properties[name.to_s] = config[:schema].to_json_schema
+          required_fields << name.to_s if config[:required]
+        end
+
+        schema = {
+          'type' => 'object',
+          'properties' => properties
+        }
+        schema['required'] = required_fields unless required_fields.empty?
+        schema
+      end
+
       def merge(&block)
         new_schema = Schema.new
         new_schema.instance_variable_set(:@fields, @fields.dup)
@@ -107,6 +132,39 @@ module Philiprehberger
       end
 
       private
+
+      TYPE_MAP = {
+        string: 'string',
+        integer: 'integer',
+        float: 'number',
+        boolean: 'boolean',
+        array: 'array',
+        hash: 'object'
+      }.freeze
+
+      def field_to_json_schema(field)
+        prop = { 'type' => TYPE_MAP.fetch(field.type, field.type.to_s) }
+        prop['default'] = field.default unless field.default.nil?
+        prop['enum'] = field.in.dup if field.in
+        prop['minimum'] = field.min if field.min
+        prop['maximum'] = field.max if field.max
+
+        if field.type == :array
+          if field.of
+            prop['items'] = { 'type' => TYPE_MAP.fetch(field.of, field.of.to_s) }
+          elsif field.schema
+            prop['items'] = field.schema.to_json_schema
+          end
+        end
+
+        if field.format.is_a?(Symbol) && Formats::FORMATS.key?(field.format)
+          prop['format'] = field.format.to_s
+        elsif field.format.is_a?(Regexp)
+          prop['pattern'] = field.format.source
+        end
+
+        prop
+      end
 
       def validate_field(field, data, errors)
         value = fetch_value(field, data)
