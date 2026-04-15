@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-04-15
+
+### Added
+- `Schema#validate_and_coerce(data)` returns `{ valid:, values:, errors: }` with a best-effort coerced payload alongside the existing error list — coerces fields with well-defined coercion and preserves raw values for the rest, even when validation fails
+
 ## [0.6.0] - 2026-04-15
 
 ### Added

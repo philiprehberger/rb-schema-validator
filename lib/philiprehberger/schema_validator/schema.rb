@@ -109,6 +109,24 @@ module Philiprehberger
         result
       end
 
+      # Validate and coerce in a single call
+      #
+      # Attempts type coercion on any field whose coercion is well defined and succeeds, leaving other
+      # values as provided. Defaults are applied for absent fields. Returns a hash containing the
+      # validity flag, the (best-effort) coerced payload, and the error list from `#validate`.
+      #
+      # @param data [Hash]
+      # @return [Hash{Symbol => Object}] { valid: Boolean, values: Hash, errors: Array<String> }
+      def validate_and_coerce(data)
+        coerced = begin
+          coerce_payload(data)
+        rescue StandardError
+          data
+        end
+        result = validate(coerced)
+        { valid: result.valid?, values: coerced, errors: result.errors }
+      end
+
       def fields
         @fields.keys
       end
@@ -150,6 +168,24 @@ module Philiprehberger
       end
 
       private
+
+      def coerce_payload(data)
+        return data unless data.is_a?(Hash)
+
+        coerced = data.dup
+        @fields.each do |name, field|
+          if coerced.key?(name)
+            value = coerced[name]
+            next if value.nil?
+
+            attempt = Coercer.coerce(value, field.type)
+            coerced[name] = attempt unless attempt.nil?
+          elsif !field.default.nil?
+            coerced[name] = field.default
+          end
+        end
+        coerced
+      end
 
       TYPE_MAP = {
         string: 'string',

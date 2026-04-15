@@ -1158,4 +1158,48 @@ RSpec.describe Philiprehberger::SchemaValidator do
       end
     end
   end
+
+  describe '#validate_and_coerce' do
+    subject(:schema) do
+      described_class.define do
+        string :name
+        integer :age
+        boolean :active, required: false, default: false
+      end
+    end
+
+    it 'returns valid: true with coerced values and empty errors for valid input' do
+      outcome = schema.validate_and_coerce({ name: 'Alice', age: '30', active: 'true' })
+
+      expect(outcome[:valid]).to be(true)
+      expect(outcome[:errors]).to be_empty
+      expect(outcome[:values]).to eq({ name: 'Alice', age: 30, active: true })
+    end
+
+    it 'coerces String to Integer and surfaces the coerced value when schema declares integer type' do
+      outcome = schema.validate_and_coerce({ name: 'Bob', age: '42' })
+
+      expect(outcome[:valid]).to be(true)
+      expect(outcome[:values][:age]).to eq(42)
+      expect(outcome[:values][:age]).to be_a(Integer)
+    end
+
+    it 'returns valid: false with populated errors and best-effort coerced values for invalid input' do
+      outcome = schema.validate_and_coerce({ name: 123, age: 'not_a_number' })
+
+      expect(outcome[:valid]).to be(false)
+      expect(outcome[:errors]).to include('age must be integer')
+      # name has well-defined string coercion, so 123 becomes "123"
+      expect(outcome[:values][:name]).to eq('123')
+      # age has no well-defined coercion for 'not_a_number', so the raw value is preserved
+      expect(outcome[:values][:age]).to eq('not_a_number')
+    end
+
+    it 'applies defaults for absent optional fields in the values payload' do
+      outcome = schema.validate_and_coerce({ name: 'Alice', age: 30 })
+
+      expect(outcome[:valid]).to be(true)
+      expect(outcome[:values][:active]).to be(false)
+    end
+  end
 end
