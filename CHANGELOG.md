@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-04-15
+
+### Added
+- `length:` option for `string` and `array` fields — supports exact `Integer` length, bounded `Range`, endless `Range`, and beginless `Range`
+- `strict!` DSL method on `Schema` to reject unknown keys not declared in the schema; exposed via `Schema#strict?` and exported as `additionalProperties: false` in `to_json_schema`
+- `Result#error_count`, `Result#to_h`, and `Result#errors_by_field` for structured error reporting
+- `length:` is exported to JSON Schema as `minLength`/`maxLength` (strings) and `minItems`/`maxItems` (arrays)
+
 ## [0.5.0] - 2026-04-04
 
 ### Added
@@ -102,3 +110,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Custom validation via blocks
 - `Result` object with `valid?` and `errors` accessors
 - `validate!` raises `ValidationError` on failure
+
+[Unreleased]: https://github.com/philiprehberger/rb-schema-validator/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/philiprehberger/rb-schema-validator/compare/v0.5.0...v0.6.0
+[0.5.0]: https://github.com/philiprehberger/rb-schema-validator/compare/v0.4.0...v0.5.0
+[0.4.0]: https://github.com/philiprehberger/rb-schema-validator/compare/v0.3.6...v0.4.0
+[0.3.6]: https://github.com/philiprehberger/rb-schema-validator/compare/v0.3.5...v0.3.6
+[0.3.5]: https://github.com/philiprehberger/rb-schema-validator/compare/v0.3.4...v0.3.5
+[0.3.4]: https://github.com/philiprehberger/rb-schema-validator/compare/v0.3.3...v0.3.4
+[0.3.3]: https://github.com/philiprehberger/rb-schema-validator/compare/v0.3.2...v0.3.3
+[0.3.2]: https://github.com/philiprehberger/rb-schema-validator/compare/v0.3.1...v0.3.2
+[0.3.1]: https://github.com/philiprehberger/rb-schema-validator/compare/v0.3.0...v0.3.1
+[0.3.0]: https://github.com/philiprehberger/rb-schema-validator/compare/v0.2.2...v0.3.0
+[0.2.2]: https://github.com/philiprehberger/rb-schema-validator/compare/v0.2.1...v0.2.2
+[0.2.1]: https://github.com/philiprehberger/rb-schema-validator/compare/v0.2.0...v0.2.1
+[0.2.0]: https://github.com/philiprehberger/rb-schema-validator/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/philiprehberger/rb-schema-validator/releases/tag/v0.1.0

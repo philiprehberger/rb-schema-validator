@@ -18,6 +18,7 @@ module Philiprehberger
         check_format(field, value, errors, field_label)
         check_inclusion(field, value, errors, field_label)
         check_range(field, value, errors, field_label)
+        check_length(field, value, errors, field_label)
         check_array_elements(field, value, errors, field_label)
         run_custom_validator(field, value, errors, field_label)
       end
@@ -46,6 +47,37 @@ module Philiprehberger
       def check_range(field, value, errors, field_label)
         errors << "#{field_label} must be >= #{field.min}" if field.min && value < field.min
         errors << "#{field_label} must be <= #{field.max}" if field.max && value > field.max
+      end
+
+      def check_length(field, value, errors, field_label)
+        return unless field.length
+        return unless value.respond_to?(:length)
+
+        range = resolve_length_range(field.length)
+        return if range.cover?(value.length)
+
+        errors << length_error_message(field_label, range, value.length)
+      end
+
+      def resolve_length_range(length)
+        return length if length.is_a?(Range)
+        return (length..length) if length.is_a?(Integer)
+
+        raise ArgumentError, "length must be an Integer or Range, got #{length.class}"
+      end
+
+      def length_error_message(field_label, range, actual)
+        min = range.begin
+        max = range.end
+        if min == max
+          "#{field_label} length must be exactly #{min} (got #{actual})"
+        elsif max.nil? || max == Float::INFINITY
+          "#{field_label} length must be >= #{min} (got #{actual})"
+        elsif min.nil? || min.zero?
+          "#{field_label} length must be <= #{max} (got #{actual})"
+        else
+          "#{field_label} length must be between #{min} and #{max} (got #{actual})"
+        end
       end
 
       def check_array_elements(field, value, errors, field_label)
