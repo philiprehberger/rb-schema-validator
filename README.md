@@ -74,6 +74,31 @@ result = schema.validate({ count: "123", enabled: "true" })
 result.valid? # => true
 ```
 
+### Validate and Coerce in One Call
+
+Use `validate_and_coerce` when you want the coerced payload alongside validity and errors in a single call:
+
+```ruby
+schema = Philiprehberger::SchemaValidator.define do
+  string :name
+  integer :age
+end
+
+outcome = schema.validate_and_coerce({ name: 'Alice', age: '30' })
+outcome[:valid]  # => true
+outcome[:values] # => { name: "Alice", age: 30 }
+outcome[:errors] # => []
+```
+
+Coercion is best-effort even when validation fails — fields with well-defined coercion are coerced, and fields without a valid coercion are returned as-is so the caller can inspect the original input:
+
+```ruby
+outcome = schema.validate_and_coerce({ name: 123, age: 'bad' })
+outcome[:valid]  # => false
+outcome[:values] # => { name: "123", age: "bad" }
+outcome[:errors] # => ["age must be integer"]
+```
+
 ### Validation Options
 
 #### `format:` — Regex Pattern Validation
@@ -369,6 +394,7 @@ schema.to_json_schema
 | `#fields` | Return the list of defined field names |
 | `#validate(data)` | Validate a hash against the schema; returns a `Result` |
 | `#validate!(data)` | Validate and raise `ValidationError` if invalid |
+| `#validate_and_coerce(data)` | Validate and return `{ valid:, values:, errors: }` with best-effort coerced payload |
 | `#merge(&block)` | Create a new schema combining current fields with additional definitions |
 | `#strict!` | Reject unknown keys not declared in the schema |
 | `#strict?` | Return `true` if the schema rejects unknown keys |
