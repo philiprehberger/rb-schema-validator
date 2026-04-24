@@ -286,6 +286,17 @@ end
 schema.fields # => [:name, :age]
 ```
 
+Query which fields are required (defaults to `true`):
+
+```ruby
+schema = Philiprehberger::SchemaValidator.define do
+  string :name
+  integer :age, required: false
+end
+
+schema.required_fields # => [:name]
+```
+
 ### Custom Validation
 
 Pass a block to any field definition for custom validation. Return a string to indicate an error:
@@ -392,6 +403,7 @@ schema.to_json_schema
 | Method | Description |
 |--------|-------------|
 | `#fields` | Return the list of defined field names |
+| `#required_fields` | Return the names of fields declared with `required: true` |
 | `#validate(data)` | Validate a hash against the schema; returns a `Result` |
 | `#validate!(data)` | Validate and raise `ValidationError` if invalid |
 | `#validate_and_coerce(data)` | Validate and return `{ valid:, values:, errors: }` with best-effort coerced payload |

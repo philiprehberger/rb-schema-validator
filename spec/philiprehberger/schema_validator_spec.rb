@@ -1202,4 +1202,42 @@ RSpec.describe Philiprehberger::SchemaValidator do
       expect(outcome[:values][:active]).to be(false)
     end
   end
+
+  describe '#required_fields' do
+    it 'returns an empty array when every field is optional' do
+      schema = described_class.define do
+        string :name, required: false
+        integer :age, required: false
+      end
+      expect(schema.required_fields).to eq([])
+    end
+
+    it 'returns only the required field names' do
+      schema = described_class.define do
+        string :name
+        integer :age, required: false
+        boolean :active
+      end
+      expect(schema.required_fields).to match_array(%i[name active])
+    end
+
+    it 'returns every field when all are required (the default)' do
+      schema = described_class.define do
+        string :name
+        integer :age
+      end
+      expect(schema.required_fields).to match_array(%i[name age])
+    end
+
+    it 'does not include fields from nested sub-schemas' do
+      schema = described_class.define do
+        string :name
+        nested :address, required: true do
+          string :city
+          string :zip
+        end
+      end
+      expect(schema.required_fields).to eq([:name])
+    end
+  end
 end

@@ -131,6 +131,17 @@ module Philiprehberger
         @fields.keys
       end
 
+      # Names of fields declared as required (`required: true`).
+      #
+      # Useful for UI generation or policy checks when you need to know which
+      # fields must be present. Nested sub-schemas are not included — query
+      # them through their own schema object.
+      #
+      # @return [Array<Symbol>]
+      def required_fields
+        @fields.each_value.select(&:required?).map(&:name)
+      end
+
       # Export a simplified JSON Schema (draft 7) representation
       #
       # @return [Hash] a hash compatible with JSON Schema draft 7

@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-04-24
+
+### Added
+- `Schema#required_fields` — returns the array of field names declared with `required: true`; nested sub-schemas are not included
+
 ## [0.7.0] - 2026-04-15
 
 ### Added
