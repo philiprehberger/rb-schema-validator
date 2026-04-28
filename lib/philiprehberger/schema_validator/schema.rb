@@ -142,6 +142,27 @@ module Philiprehberger
         @fields.each_value.select(&:required?).map(&:name)
       end
 
+      # Names of fields not declared as required.
+      #
+      # Counterpart to {#required_fields}. Excludes nested sub-schemas — query
+      # them through their own schema object. Order matches declaration order.
+      #
+      # @return [Array<Symbol>]
+      def optional_fields
+        @fields.each_value.reject(&:required?).map(&:name)
+      end
+
+      # Whether a field with the given name has been declared on this schema.
+      #
+      # Nested sub-schemas are not considered field declarations — use
+      # {#nested_schemas} or query the sub-schema directly.
+      #
+      # @param name [Symbol, String] the field name (coerced via `to_sym`)
+      # @return [Boolean]
+      def field?(name)
+        @fields.key?(name.to_sym)
+      end
+
       # Export a simplified JSON Schema (draft 7) representation
       #
       # @return [Hash] a hash compatible with JSON Schema draft 7

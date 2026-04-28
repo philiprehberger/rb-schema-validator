@@ -1240,4 +1240,80 @@ RSpec.describe Philiprehberger::SchemaValidator do
       expect(schema.required_fields).to eq([:name])
     end
   end
+
+  describe '#optional_fields' do
+    it 'returns an empty array when every field is required' do
+      schema = described_class.define do
+        string :name
+        integer :age
+      end
+      expect(schema.optional_fields).to eq([])
+    end
+
+    it 'returns only the optional field names' do
+      schema = described_class.define do
+        string :name
+        integer :age, required: false
+        boolean :active, required: false
+      end
+      expect(schema.optional_fields).to match_array(%i[age active])
+    end
+
+    it 'returns every field when all are optional' do
+      schema = described_class.define do
+        string :name, required: false
+        integer :age, required: false
+      end
+      expect(schema.optional_fields).to match_array(%i[name age])
+    end
+
+    it 'partitions cleanly with required_fields' do
+      schema = described_class.define do
+        string :name
+        integer :age, required: false
+        boolean :active
+      end
+      combined = (schema.required_fields + schema.optional_fields).sort
+      expect(combined).to eq(%i[active age name])
+    end
+
+    it 'does not include fields from nested sub-schemas' do
+      schema = described_class.define do
+        string :name, required: false
+        nested :address do
+          string :city, required: false
+        end
+      end
+      expect(schema.optional_fields).to eq([:name])
+    end
+  end
+
+  describe '#field?' do
+    subject(:schema) do
+      described_class.define do
+        string :name
+        integer :age, required: false
+        nested :address do
+          string :city
+        end
+      end
+    end
+
+    it 'returns true for a declared field' do
+      expect(schema.field?(:name)).to be(true)
+      expect(schema.field?(:age)).to be(true)
+    end
+
+    it 'returns false for an undeclared field' do
+      expect(schema.field?(:nope)).to be(false)
+    end
+
+    it 'returns false for nested sub-schema names' do
+      expect(schema.field?(:address)).to be(false)
+    end
+
+    it 'accepts string names by coercing to symbol' do
+      expect(schema.field?('name')).to be(true)
+    end
+  end
 end

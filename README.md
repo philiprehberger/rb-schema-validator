@@ -286,15 +286,26 @@ end
 schema.fields # => [:name, :age]
 ```
 
-Query which fields are required (defaults to `true`):
+Query which fields are required (defaults to `true`) or optional:
 
 ```ruby
 schema = Philiprehberger::SchemaValidator.define do
   string :name
   integer :age, required: false
+  boolean :active
 end
 
-schema.required_fields # => [:name]
+schema.required_fields # => [:name, :active]
+schema.optional_fields # => [:age]
+```
+
+Check whether a field is declared. String names are coerced to symbols, and
+nested sub-schemas are not considered field declarations:
+
+```ruby
+schema.field?(:name)    # => true
+schema.field?("active") # => true
+schema.field?(:nope)    # => false
 ```
 
 ### Custom Validation
@@ -404,6 +415,8 @@ schema.to_json_schema
 |--------|-------------|
 | `#fields` | Return the list of defined field names |
 | `#required_fields` | Return the names of fields declared with `required: true` |
+| `#optional_fields` | Return the names of fields declared with `required: false` |
+| `#field?(name)` | Whether a field with the given name has been declared (string names are coerced to symbol) |
 | `#validate(data)` | Validate a hash against the schema; returns a `Result` |
 | `#validate!(data)` | Validate and raise `ValidationError` if invalid |
 | `#validate_and_coerce(data)` | Validate and return `{ valid:, values:, errors: }` with best-effort coerced payload |

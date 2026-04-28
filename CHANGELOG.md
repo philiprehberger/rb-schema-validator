@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-04-27
+
+### Added
+- `Schema#optional_fields` — counterpart to `required_fields`; returns names of fields not declared as required.
+- `Schema#field?(name)` — predicate for whether a field has been declared on the schema (accepts symbol or string; nested sub-schemas excluded).
+
 ## [0.8.0] - 2026-04-24
 
 ### Added
